@@ -17,6 +17,7 @@ def index_doc(index_name='index-photos', document={'temp': 'temp'}):
         body=document
     )
 
+    print(response)
     return response
 
 def lambda_handler(event, context):
