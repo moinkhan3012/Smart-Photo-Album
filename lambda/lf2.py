@@ -45,9 +45,9 @@ def lambda_handler(event, context):
     lex = boto3.client('lexv2-runtime')
     logger.info("Event")
     response = lex.recognize_text(
-        botId='LBIBFC4DPP', 
+        botId=os.environ.get('BOT_ID'), 
         botAliasId='TSTALIASID',
-        sessionId= '63944ade-e6fd-4476-b145-ffa7fed74fd4',
+        sessionId= os.environ.get('SESSION_ID'),
         localeId='en_US',  
         text = event['queryStringParameters']['q']
     )
