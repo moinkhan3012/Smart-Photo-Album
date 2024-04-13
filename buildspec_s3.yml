@@ -2,5 +2,5 @@ version: 0.2
 phases:
   build:
     commands:
-    - echo "Deploying client to S3"
+    - echo "Deploying client to S3 Frontend Website"
     - cd frontend && aws s3 cp . s3://$S3_FRONTEND_BUCKET --recursive
