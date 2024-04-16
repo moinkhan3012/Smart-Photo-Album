@@ -3,7 +3,7 @@
 
 const searchButton = document.getElementById('search-button');
 const searchInput = document.getElementById('search-input');
-const searchResults = document.getElementById('search-results');
+const searchResults = document.getElementById('gallery-row');
 
 const uploadButton = document.getElementById('upload-button');
 const fileInput = document.getElementById('file-input');
@@ -48,9 +48,6 @@ searchButton.addEventListener('click', () => {
             if (result['status'] == 202) {
                 return showAlert('warning', result['data']['message'] )
             }
-            else if(result['status'] == 404){
-                return showAlert('error', result['data']['message'] )
-            }
 
 
             image_paths = result['data']["images"];
@@ -74,22 +71,23 @@ searchButton.addEventListener('click', () => {
 
         }).catch(function(result) {
             console.log(result);
+            if(result['status'] == 404){
+
+                searchResults.innerHTML = '';
+                showAlert('danger', result['data']['message'] );
+                return;
+
+            }
+
+            // Clear previous results
+
+
         });
 
 
     }
 });
 
-function displaySearchResults(results) {
-    // Clear previous results
-    searchResults.innerHTML = '';
-    // Display new results
-    results.forEach(result => {
-        const img = document.createElement('img');
-        img.src = result.imageUrl;
-        searchResults.appendChild(img);
-    });
-}
 
 
 
@@ -146,7 +144,7 @@ uploadButton.addEventListener('click', () => {
                 .catch(function (error) {
                     console.log(error);
                     // Create a danger alert
-                    showAlert("error", "There is issue while uploading the image!")
+                    showAlert("danger", "There is issue while uploading the image!")
                 })
                 .finally(()=>{
                     resetImageAndLabel();
