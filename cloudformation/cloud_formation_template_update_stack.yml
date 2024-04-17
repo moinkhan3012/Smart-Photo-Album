@@ -3,6 +3,25 @@ Parameters:
     Description: The name of the s3 code bucket
     Type: String
     Default: cc-code-bucket
+  GitHubOwner:
+    Type: String
+    Default: moinkhan3012
+  GitHubRepo:
+    Type: String
+    Default: Smart-Photo-Album
+  GitHubBranch:
+    Type: String
+    Default: main
+  GitHubOAuthToken:
+    Type: String
+    Default: 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
+  GitHubLink: 
+    Type: String
+    Default: https://github.com/moinkhan3012/Smart-Photo-Album.git
+  artifactbucket:
+    Description: The name of the s3 code bucket
+    Type: String
+    Default: cc-code-bartifactbucket
   elasticSearchKeyName:
     Description: The name of the s3 bucket layer key 
     Type: String
@@ -472,4 +491,120 @@ Resources:
       ManagedPolicyArns:
       - "arn:aws:iam::aws:policy/service-role/AmazonAPIGatewayPushToCloudWatchLogs"
       - "arn:aws:iam::aws:policy/AmazonS3FullAccess"
+
+  ###### CodePipeline ######
+  codebuildservicerole:
+      Type: AWS::IAM::Role
+      Properties:
+        AssumeRolePolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+            - Effect: Allow
+              Principal:
+                Service:
+                  - codebuild.amazonaws.com
+              Action:
+                - 'sts:AssumeRole'
+        Description: 'Role for codebuild'
+        ManagedPolicyArns:
+          - arn:aws:iam::aws:policy/AdministratorAccess
+
+  frontendpipelines3role:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - codepipeline.amazonaws.com
+            Action:
+              - 'sts:AssumeRole'
+      Description: 'Role for codepipeline to access S3'
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AdministratorAccess
+
+  codebuildlambda:
+    Type: AWS::CodeBuild::Project
+    Properties: 
+      Name: Test
+      Artifacts:
+        Type: NO_ARTIFACTS
+      Environment:
+        ComputeType: BUILD_GENERAL1_SMALL
+        Image: aws/codebuild/standard:4.0
+        Type: LINUX_CONTAINER
+        S3_FRONTEND_BUCKET: !Ref frontendBucketName
+      ServiceRole: !GetAtt codebuildservicerole.Arn
+      Source:
+        BuildSpec: "codepipeline/buildspec_s3.yml"
+        Location: !Ref GitHubLink
+        Type: GITHUB
+      Triggers:
+        Webhook: True
+        FilterGroups:
+        - - Type: EVENT
+            Pattern: PUSH
+
+  frontendcodepipelines3:
+    Type: AWS::CodePipeline::Pipeline
+    Properties:
+      ArtifactStore:
+        Location: !Ref artifactbucket
+        Type: S3
+      RestartExecutionOnUpdate: False
+      RoleArn: !GetAtt frontendpipelines3role.Arn
+      Stages:
+        - Name: Source
+          Actions:
+            - Name: Source
+              ActionTypeId:
+                Category: Source
+                Owner: ThirdParty
+                Provider: GitHub
+                Version: 1
+              Configuration:
+                {
+                  'Owner': !Ref GitHubOwner,
+                  'Repo': !Ref GitHubRepo,
+                  'Branch': !Ref GitHubBranch,
+                  'OAuthToken': !Ref GitHubOAuthToken,
+                }
+              OutputArtifacts:
+                - Name: 'ai-app'
+              Region: us-east-1
+        - Name: Build
+          Actions:
+            - Name: Build
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Version: '1'
+                Provider: CodeBuild
+              Configuration:
+                ProjectName: !Ref codebuildlambda
+              InputArtifacts:
+                - Name: ai-app
+        - Name: Deploy
+          Actions:
+            - Name: Deploy
+              ActionTypeId:
+                Category: Deploy
+                Owner: AWS
+                Provider: S3
+                Version: 1
+              Configuration:
+                {
+                  'BucketName': { 'Ref': 'frontendBucketName' },
+                  'Extract': True
+                }
+              InputArtifacts:
+                - Name: 'ai-app'
+              Region: us-east-1
+Outputs:
+  frontendS3BucketWebsiteURL:
+    Description: Public URL of the frontend S3 bucket
+    Value: !GetAtt frontendBucket2CF.WebsiteURL
+
 Transform: AWS::Serverless-2016-10-31
