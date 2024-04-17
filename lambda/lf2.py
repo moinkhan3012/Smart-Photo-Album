@@ -61,7 +61,7 @@ def lambda_handler(event, context):
         #call ES service to fetch the photos
         
         logger.info(response['sessionState']['intent']['slots'])
-        keywords = [ keyword['value']['resolvedValues'][0] for keyword in response['sessionState']['intent']['slots'].values() if keyword and keyword['value']['resolvedValues'] ]
+        keywords = [ keyword['value']['interpretedValue'] for keyword in response['sessionState']['intent']['slots'].values() if keyword and keyword['value']['interpretedValue'] ]
         
         if not keywords:
             return {
