@@ -77,7 +77,6 @@ def lambda_handler(event, context):
         
         search_results = search_doc(keywords)
         
-        logger.info(search_results)
         if not search_results:
             #return empty response
             return {
