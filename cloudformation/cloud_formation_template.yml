@@ -3,6 +3,25 @@ Parameters:
     Description: The name of the s3 code bucket
     Type: String
     Default: cc-code-bucket
+  GitHubOwner:
+    Type: String
+    Default: moinkhan3012
+  GitHubRepo:
+    Type: String
+    Default: Smart-Photo-Album
+  GitHubBranch:
+    Type: String
+    Default: main
+  GitHubOAuthToken:
+    Type: String
+    Default: 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
+  GitHubLink: 
+    Type: String
+    Default: https://github.com/moinkhan3012/Smart-Photo-Album.git
+  artifactbucket:
+    Description: The name of the s3 code bucket
+    Type: String
+    Default: cc-code-bartifactbucket
   elasticSearchKeyName:
     Description: The name of the s3 bucket layer key 
     Type: String
@@ -108,11 +127,11 @@ Resources:
     Properties:
       Handler: !Ref lambdaFunction2HandlerName
       Role: !GetAtt lf2role.Arn
-      Timeout: 15
       Code:
         S3Bucket: !Ref codeBucketName
         S3Key: !Ref lambdaFunction2KeyName
       Runtime: python3.9
+      Timeout: 15
       Layers:
         - !Ref ElasticSearchLambdaLayer
       Environment:
@@ -161,6 +180,7 @@ Resources:
   ### S3 Buckets ####
   photoBucket1CF:
     Type: AWS::S3::Bucket
+    DeletionPolicy: Delete
     Properties:
       BucketName: !Ref photoBucketName
       PublicAccessBlockConfiguration: 
@@ -203,6 +223,7 @@ Resources:
                 aws:SecureTransport: 'false'
   frontendBucket2CF:
     Type: AWS::S3::Bucket
+    DeletionPolicy: Delete
     Properties:
       BucketName: !Ref frontendBucketName
       WebsiteConfiguration:
@@ -466,4 +487,9 @@ Resources:
       ManagedPolicyArns:
       - "arn:aws:iam::aws:policy/service-role/AmazonAPIGatewayPushToCloudWatchLogs"
       - "arn:aws:iam::aws:policy/AmazonS3FullAccess"
+Outputs:
+  frontendS3BucketWebsiteURL:
+    Description: Public URL of the frontend S3 bucket
+    Value: !GetAtt frontendBucket2CF.WebsiteURL
+
 Transform: AWS::Serverless-2016-10-31
