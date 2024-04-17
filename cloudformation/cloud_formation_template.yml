@@ -214,7 +214,7 @@ Resources:
             Action:
               - "s3:PutObject"
               - "s3:GetObject"
-            Effect: Deny
+            Effect: Allow
             Resource:
               - !GetAtt photoBucket1CF.Arn
               - !Sub ${photoBucket1CF.Arn}/*
@@ -225,6 +225,9 @@ Resources:
     Type: AWS::S3::Bucket
     DeletionPolicy: Delete
     Properties:
+      PublicAccessBlockConfiguration:
+        BlockPublicPolicy: false
+        RestrictPublicBuckets: false
       BucketName: !Ref frontendBucketName
       WebsiteConfiguration:
         IndexDocument: index.html
@@ -233,19 +236,15 @@ Resources:
     Properties:
       Bucket: !Ref frontendBucket2CF
       PolicyDocument:
-        Id: RequireEncryptionInTransit
         Version: '2012-10-17'
         Statement:
           - Principal: '*'
             Action:
               - "s3:GetObject"
-            Effect: Deny
+            Effect: Allow
             Resource:
               - !GetAtt frontendBucket2CF.Arn
               - !Sub ${frontendBucket2CF.Arn}/*
-            Condition:
-              Bool:
-                aws:SecureTransport: 'false'
   ### S3 Lambda Permission ###
   s3Permission:
     Type: AWS::Lambda::Permission
